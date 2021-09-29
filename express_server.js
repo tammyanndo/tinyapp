@@ -20,10 +20,15 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get("/urls/new", (req, res) => {
-  
-
-
   res.render("urls_new");
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  
+  let shortURL = req.params.shortURL
+  delete urlDatabase[shortURL];
+
+  res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
