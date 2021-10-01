@@ -51,7 +51,8 @@ const findUserByEmail = function (email, users) {
 const confirmUser = function (email, password, usersdb) {
   const userFound = findUserByEmail(email, usersdb)
   console.log('userfound:', userFound)
-  if (userFound && userFound.password === password) { //is there a ways to separate this? so that an error message will display for either error
+  if (userFound && userFound.password === password) { 
+  // is there a ways to separate this? so that an error message will display for either error
     return userFound;
   }
   return false
@@ -120,10 +121,15 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (req.cookies['user_id']) {
   const templateVars = {
     user: req.cookies['user_id'] ? usersdb[req.cookies["user_id"]] : undefined
   };
-  res.render("urls_new", templateVars);
+    res.render("urls_new", templateVars);
+  } else {
+    const templateVars = { user: null }
+    res.render("urls_login", templateVars);
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -170,6 +176,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
+
   res.redirect("/urls");
 })
 
