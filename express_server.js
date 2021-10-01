@@ -51,7 +51,7 @@ const findUserByEmail = function (email, users) {
 const confirmUser = function (email, password, usersdb) {
   const userFound = findUserByEmail(email, usersdb)
   console.log('userfound:', userFound)
-  if (userFound && userFound.password === password) {
+  if (userFound && userFound.password === password) { //is there a ways to separate this? so that an error message will display for either error
     return userFound;
   }
   return false
@@ -73,7 +73,7 @@ app.post("/login", (req, res) => {
     res.cookie("user_id", user.id)
     res.redirect("/urls");
   } else {
-    res.status(403).send('This user does not exist.')
+    res.status(403).send('Status code 403: This user and password do not match. Please try again')
   }
 });
 
@@ -93,18 +93,18 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   // if the email or password is empty, return 400 status code
   if (!email) {
-    res.status(400).send('Please enter your email address.');
+    res.status(400).send('Status code 400: Please enter your email address.');
     return;
   }
   if (!password) {
-    res.status(400).send('Please enter your password.')
+    res.status(400).send('Status code 400: Please enter your password.')
   }
 
   // check to see if user exists
   const userFound = findUserByEmail(email, usersdb);
   // if user exists, then return 400 code status
   if (userFound) {
-    res.status(400).send('That user already exists. Please use a different email address to register.');
+    res.status(400).send('Status error 400: That user already exists. Please use a different email address to register.');
     return;
   }
   // if user does not exist, then add user to db
@@ -162,7 +162,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[shortURL],
-    user: usersdb[req.cookie["user_id"]]
+    user: usersdb[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
 });
