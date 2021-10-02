@@ -6,10 +6,37 @@ const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 app.set("view engine", "ejs");
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  },
+  i3AoGr: {
+    longURL: "https://www.google.ca",
+    userID: "abkdkl"
+}
 };
+
+const urlsForUser = function(id, urlsDb) {
+  const urls = {};
+
+  for (let shortURL in urlDatabase) {
+    if (id === urlDatabase[shortURL].userID) {
+      urls[shortURL] = urlDatabase[shortURL]
+    }
+  } 
+  return urls
+}
+
 
 const usersdb = {
   "userRandomID": {
@@ -23,6 +50,7 @@ const usersdb = {
     password: "dishwasher-funk"
   }
 }
+
 
 function generateRandomString() {
   return Math.random().toString(36).substr(2, 6);
@@ -115,8 +143,18 @@ app.post('/register', (req, res) => {
 })
 
 app.post("/urls/:shortURL", (req, res) => {
+  //this is the edit URL (when you submit edit)
+  const userId = req.cookies['user_id']
+  if (!userId) {
+     return res.send('Please login to edit this URL.')
+  }
   let shortURL = req.params.shortURL
-  urlDatabase[shortURL] = req.body.longURL;
+  if (userId !== urlDatabase[shortURL].userID) {
+    return res.send('Permission to edit this URL is denied.')
+  }
+  
+  longURL = req.body.longURL
+  urlDatabase[shortURL].longURL = longURL
   res.redirect("/urls/");
 });
 
@@ -128,12 +166,20 @@ app.get("/urls/new", (req, res) => {
     res.render("urls_new", templateVars);
   } else {
     const templateVars = { user: null }
-    res.render("urls_login", templateVars);
+    res.send('Please login to create a new short URL.')
   }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const userId = req.cookies['user_id']
+  if (!userId) {
+     return res.send('Please login to delete URL.')
+  }
   let shortURL = req.params.shortURL
+  if (userId !== urlDatabase[shortURL].userID) {
+    return res.send('Permission to delete denied.')
+  }
+
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
@@ -141,33 +187,39 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL
   const randomString = generateRandomString()
-  urlDatabase[randomString] = longURL
+  urlDatabase[randomString] = {}
+  urlDatabase[randomString].longURL = longURL
+  urlDatabase[randomString].userID = req.cookies['user_id']
+  console.log('urlDatabase:', urlDatabase)
   res.redirect(`/urls/${randomString}`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 });
 
 app.get("/urls", (req, res) => {
   const userId = req.cookies['user_id']
-  if (userId) {
-    const templateVars = {
-      urls: urlDatabase,
-      user: usersdb[req.cookies["user_id"]]
-    };
-    res.render("urls_index", templateVars)
-  } else {
-    res.redirect('/login')
+  if (!userId) {
+    return res.redirect('/login')
   }
+  const templateVars = {
+    urls: urlsForUser(userId, urlDatabase),
+    user: usersdb[req.cookies["user_id"]]
+  };
+  res.render("urls_index", templateVars)
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL
+  const userId = req.cookies['user_id']
+  if (!userId) {
+     return res.send('Please login to see your URLs.')
+  }
   const templateVars = {
     shortURL: shortURL,
-    longURL: urlDatabase[shortURL],
+    longURL: urlDatabase[shortURL].longURL,
     user: usersdb[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
