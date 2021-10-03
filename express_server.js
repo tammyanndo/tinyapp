@@ -1,10 +1,19 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 const cookieParser = require('cookie-parser')
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session')
+const { findUserByEmail } = require("./helpers");
+const { urlsForUser } = require("./helpers");
+const { usersdb } = require("./helpers");
+const { generateRandomString } = require("./helpers");
+const { createUser } = require("./helpers");
+const { confirmUser } = require("./helpers");
+const { urlDatabase } = require("./helpers");
+const bodyParser = require("body-parser");
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.set("view engine", "ejs");
 app.use(cookieSession({
@@ -12,87 +21,75 @@ app.use(cookieSession({
   keys: ['something', 'key2', 'something else']
 }));
 
-const urlDatabase = {
-  b6UTxQ: {
-      longURL: "https://www.tsn.ca",
-      userID: "aJ48lW"
-  },
-  i3BoGr: {
-      longURL: "https://www.google.ca",
-      userID: "aJ48lW"
-  },
-  i3AoGr: {
-    longURL: "https://www.google.ca",
-    userID: "abkdkl"
-}
-};
+// const urlDatabase = {
+//   b6UTxQ: {
+//       longURL: "https://www.tsn.ca",
+//       userID: "aJ48lW"
+//   },
+//   i3BoGr: {
+//       longURL: "https://www.google.ca",
+//       userID: "aJ48lW"
+//   },
+//   i3AoGr: {
+//     longURL: "https://www.google.ca",
+//     userID: "abkdkl"
+// }
+// };
 
-const urlsForUser = function(id, urlsDb) {
-  const urls = {};
+// const urlsForUser = function(id, urlsDb) {
+//   const urls = {};
 
-  for (let shortURL in urlDatabase) {
-    if (id === urlDatabase[shortURL].userID) {
-      urls[shortURL] = urlDatabase[shortURL]
-    }
-  } 
-  return urls
-}
+//   for (let shortURL in urlDatabase) {
+//     if (id === urlDatabase[shortURL].userID) {
+//       urls[shortURL] = urlDatabase[shortURL]
+//     }
+//   } 
+//   return urls
+// }
 
-const usersdb = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk", 10)
-  }
-}
+// const usersdb = {
+//   "userRandomID": {
+//     id: "userRandomID",
+//     email: "user@example.com",
+//     password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
+//   },
+//   "user2RandomID": {
+//     id: "user2RandomID",
+//     email: "user2@example.com",
+//     password: bcrypt.hashSync("dishwasher-funk", 10)
+//   }
+// }
 
-function generateRandomString() {
-  return Math.random().toString(36).substr(2, 6);
-}
+// function generateRandomString() {
+//   return Math.random().toString(36).substr(2, 6);
+// }
 
-const createUser = function (email, password, users) {
-  const userId = generateRandomString();
-  const hashedPassword = bcrypt.hashSync(password, 10)
-      users[userId] = {
-        id: userId,
-        email,
-        password: hashedPassword
-      };
-  return userId;
-};
+// const createUser = function (email, password, users) {
+//   const userId = generateRandomString();
+//   const hashedPassword = bcrypt.hashSync(password, 10)
+//       users[userId] = {
+//         id: userId,
+//         email,
+//         password: hashedPassword
+//       };
+//   return userId;
+// };
 
-const findUserByEmail = function (email, users) {
-  for (let userId in users) {
-    const user = users[userId];
-    if (email === user.email) {
-      return user;
-    }
-  }
-  return false;
-};
+// const confirmUser = function (email, password, usersdb) {
+//   const userFound = findUserByEmail(email, usersdb)
+//   if (!userFound) {
+//     return false
+//   };
+//   if (userFound) {
+//     const result = bcrypt.compareSync(password, userFound.password)
+//       if (!result) {
+//         return false;
+//       } else {
+//         return userFound
+//       }
+//   }
+// };
 
-const confirmUser = function (email, password, usersdb) {
-  const userFound = findUserByEmail(email, usersdb)
-  if (!userFound) {
-    return false
-  };
-  if (userFound) {
-    const result = bcrypt.compareSync(password, userFound.password)
-      if (!result) {
-        return false;
-      } else {
-        return userFound
-      }
-  }
-};
-
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.post("/login", (req, res) => {
@@ -108,7 +105,7 @@ app.post("/login", (req, res) => {
     req.session.user_id = user.id
     res.redirect("/urls");
   } else {
-    res.status(403).send('Status code 403: Please login.')
+    res.status(403).send('Status code 403')
   }
 });
 
