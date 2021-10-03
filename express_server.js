@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser')
+const bcrypt = require('bcryptjs');
 
 app.use(cookieParser())
 app.set("view engine", "ejs");
@@ -42,12 +43,12 @@ const usersdb = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 }
 
@@ -58,11 +59,12 @@ function generateRandomString() {
 
 const createUser = function (email, password, users) {
   const userId = generateRandomString();
-  users[userId] = {
-    id: userId,
-    email,
-    password,
-  };
+  const hashedPassword = bcrypt.hashSync(password, 10)
+      users[userId] = {
+        id: userId,
+        email,
+        password: hashedPassword
+      };
   return userId;
 };
 
@@ -78,12 +80,17 @@ const findUserByEmail = function (email, users) {
 
 const confirmUser = function (email, password, usersdb) {
   const userFound = findUserByEmail(email, usersdb)
-  console.log('userfound:', userFound)
-  if (userFound && userFound.password === password) { 
-  // is there a ways to separate this? so that an error message will display for either error
-    return userFound;
+  if (!userFound) {
+    return false
+  };
+  if (userFound) {
+    const result = bcrypt.compareSync(password, userFound.password)
+      if (!result) {
+        return false;
+      } else {
+        return userFound
+      }
   }
-  return false
 };
 
 const bodyParser = require("body-parser");
@@ -102,7 +109,7 @@ app.post("/login", (req, res) => {
     res.cookie("user_id", user.id)
     res.redirect("/urls");
   } else {
-    res.status(403).send('Status code 403: This user and password do not match. Please try again')
+    res.status(403).send('Status code 403: Please login.')
   }
 });
 
@@ -133,11 +140,11 @@ app.post('/register', (req, res) => {
   const userFound = findUserByEmail(email, usersdb);
   // if user exists, then return 400 code status
   if (userFound) {
-    res.status(400).send('Status error 400: That user already exists. Please use a different email address to register.');
-    return;
+    return res.status(400).send('Status error 400: That user already exists. Please use a different email address to register.');
   }
   // if user does not exist, then add user to db
   const userId = createUser(email, password, usersdb);
+  
   res.cookie('user_id', userId);
   res.redirect('/urls');
 })
@@ -152,7 +159,6 @@ app.post("/urls/:shortURL", (req, res) => {
   if (userId !== urlDatabase[shortURL].userID) {
     return res.send('Permission to edit this URL is denied.')
   }
-  
   longURL = req.body.longURL
   urlDatabase[shortURL].longURL = longURL
   res.redirect("/urls/");
