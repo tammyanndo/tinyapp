@@ -1,6 +1,4 @@
 const bcrypt = require('bcryptjs');
-
-
 const findUserByEmail = function (email, users) {
   for (let userId in users) {
     const user = users[userId];
@@ -9,6 +7,21 @@ const findUserByEmail = function (email, users) {
     }
   }
   return false;
+};
+
+const urlDatabase = {
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  },
+  i3AoGr: {
+    longURL: "https://www.google.ca",
+    userID: "abkdkl"
+}
 };
 
 const urlsForUser = function(id, urlsDb) {
@@ -65,19 +78,5 @@ const confirmUser = function (email, password, usersdb) {
   }
 };
 
-const urlDatabase = {
-  b6UTxQ: {
-      longURL: "https://www.tsn.ca",
-      userID: "aJ48lW"
-  },
-  i3BoGr: {
-      longURL: "https://www.google.ca",
-      userID: "aJ48lW"
-  },
-  i3AoGr: {
-    longURL: "https://www.google.ca",
-    userID: "abkdkl"
-}
-};
 
-module.exports = { findUserByEmail, urlsForUser, usersdb, generateRandomString, createUser, confirmUser, urlDatabase };
+module.exports = { findUserByEmail, confirmUser, createUser, generateRandomString, usersdb, urlsForUser, urlDatabase };
